@@ -1,0 +1,89 @@
+import streamlit as st
+
+# 1. Page Configuration & Title
+st.set_page_config(page_title="F1 Budget Cap Simulator", layout="wide", page_icon="🏎️")
+st.title("🏎️ Formula 1 Budget Cap Simulator & Financial Guide")
+st.markdown("Learn how **FIA Financial Regulations** impact team development and operational strategy.")
+
+# 2. Sidebar Configuration & Core Logic constants
+BUDGET_CAP = 215_000_000 # 2026 Regulations Cap
+
+st.sidebar.header("🔧 Team Allocation Controls")
+st.sidebar.markdown(f"**Cost Cap Limit:** ${BUDGET_CAP:,}")
+
+# 3. Sliders for Cap-Included Expenses
+st.sidebar.subheader("📋 Included in Cost Cap")
+r_and_d = st.sidebar.slider("Car R&D & Aerodynamics ($)", 10_000_000, 100_000_000, 50_000_000, step=1_000_000)
+eng_salaries = st.sidebar.slider("Engineering Salaries ($)", 15_000_000, 60_000_000, 35_000_000, step=1_000_000)
+manufacturing = st.sidebar.slider("Car Manufacturing & Spares ($)", 20_000_000, 80_000_000, 45_000_000, step=1_000_000)
+logistics = st.sidebar.slider("Freight & Race Operations ($)", 15_000_000, 50_000_000, 30_000_000, step=1_000_000)
+
+# 4. Sliders for Cap-Excluded Expenses
+st.sidebar.subheader("🚫 Excluded from Cost Cap")
+driver_salaries = st.sidebar.slider("Driver Contracts ($)", 5_000_000, 60_000_000, 20_000_000, step=1_000_000)
+top_3_execs = st.sidebar.slider("Top 3 Personnel Salaries ($)", 5_000_000, 30_000_000, 12_000_000, step=1_000_000)
+marketing = st.sidebar.slider("Marketing & Hospitality ($)", 5_000_000, 40_000_000, 15_000_000, step=1_000_000)
+
+# 5. Financial Calculations
+total_included = r_and_d + eng_salaries + manufacturing + logistics
+total_excluded = driver_salaries + top_3_execs + marketing
+grand_total_spend = total_included + total_excluded
+remaining_cap = BUDGET_CAP - total_included
+cap_percentage = (total_included / BUDGET_CAP) * 100
+
+# 6. Dashboard Layout - Performance Metrics
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        label="Total Cap-Regulated Spend", 
+        value=f"${total_included:,}", 
+        delta=f"${remaining_cap:,} remaining",
+        delta_color="normal" if remaining_cap >= 0 else "inverse"
+    )
+
+with col2:
+    st.metric(label="Total Cap-Exempt Spend", value=f"${total_excluded:,}")
+
+with col3:
+    st.metric(label="Total Team Operations Outlay", value=f"${grand_total_spend:,}")
+
+# Progress Bar for Cap Visual Indicator
+st.markdown("### Cost Cap Utilization")
+if remaining_cap >= 0:
+    st.progress(min(cap_percentage / 100, 1.0))
+    st.success(f"✅ Your team is compliant! Using {cap_percentage:.1f}% of the regulated cap.")
+else:
+    st.progress(1.0)
+    over_amount = abs(remaining_cap)
+    over_percent = (over_amount / BUDGET_CAP) * 100
+    
+    if over_percent <= 5.0:
+        st.warning(f"⚠️ **Minor Financial Breach ({over_percent:.1f}% over):** Expect a public reprimand or minor sporting penalties.")
+    else:
+        st.error(f"🚨 **Material Sporting Breach ({over_percent:.1f}% over):** Severe penalties likely, including championship points deduction!")
+
+# 7. Educational Layout - Split Tables
+st.markdown("---")
+st.markdown("### 📊 Budget Breakdown & FIA Ruleset Cheat Sheet")
+
+left_col, right_col = st.columns(2)
+
+with left_col:
+    st.subheader("Counted Against the Cap")
+    st.write("These items directly influence car speed and on-track operational reliability.")
+    st.json({
+        "Research & Development": f"${r_and_d:,}",
+        "Engineering Staff Payroll": f"${eng_salaries:,}",
+        "Parts & Production Material": f"${manufacturing:,}",
+        "Global Logistics & Travel": f"${logistics:,}"
+    })
+
+with right_col:
+    st.subheader("Excluded from the Cap")
+    st.write("Teams can spend freely here without breaking FIA limits to boost brand power or secure star drivers.")
+    st.json({
+        "Driver Retainers": f"${driver_salaries:,}",
+        "Top Three Highest Paid Employees": f"${top_3_execs:,}",
+        "Marketing, PR, & Fan Zones": f"${marketing:,}"
+    })
